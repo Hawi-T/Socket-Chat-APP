@@ -1,0 +1,17 @@
+# Ignore dependency folders
+node_modules/
+npm-debug.log*
+
+# Ignore build artifacts
+dist/
+build/
+
+# Ignore local environment variables
+.env*.local
+
+# Ignore Git files
+.git/
+.gitignore
+
+# Ignore OS-specific files
+.DS_Store

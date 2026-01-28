@@ -1,0 +1,46 @@
+services:
+  db:
+    image: mysql:8.0
+    container_name: chat-db
+    restart: always
+    environment:
+      MYSQL_DATABASE: chatdb
+      MYSQL_ROOT_PASSWORD: db_passwd
+      MYSQL_ROOT_HOST: "%"  # Allows backend to connect to root
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql # saves data(data persistence)!
+      - ./backend/src/main/resources/schema.sql:/docker-entrypoint-initdb.d/1.sql
+    healthcheck:
+      test: ["CMD", "mysqladmin" ,"ping", "-h", "localhost"]
+      timeout: 10s
+      retries: 5
+
+  backend:
+    build: ./backend
+    container_name: chat-backend
+    restart: on-failure
+    ports:
+      - "8080:8080"
+    environment:
+      # We point the URL to 'db' (the service name), not 'localhost'
+      - spring.datasource.url=jdbc:mysql://db:3306/chatdb?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+      - SPRING_DATASOURCE_USERNAME=root
+      - SPRING_DATASOURCE_PASSWORD=db_passwd
+    depends_on:
+      db:
+        condition: service_healthy
+
+  frontend:
+    build: ./client
+    container_name: chat-frontend
+    ports:
+      - "3000:80"
+    environment:
+      - VITE_API_BASE_URL=http://localhost:8080
+    depends_on:
+      - backend
+
+volumes:
+  mysql_data: # Declared here, and now mapped above
